@@ -1,125 +1,13 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from './assets/vite.svg'
-// import heroImg from './assets/hero.png'
-// import './App.css'
-
-// function App() {
-//   const [count, setCount] = useState(0)
-
-//   return (
-//     <>
-//       <section id="center">
-//         <div className="hero">
-//           <img src={heroImg} className="base" width="170" height="179" alt="" />
-//           <img src={reactLogo} className="framework" alt="React logo" />
-//           <img src={viteLogo} className="vite" alt="Vite logo" />
-//         </div>
-//         <div>
-//           <h1>Get started</h1>
-//           <p>
-//             Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-//           </p>
-//         </div>
-//         <button
-//           type="button"
-//           className="counter"
-//           onClick={() => setCount((count) => count + 1)}
-//         >
-//           Count is {count}
-//         </button>
-//       </section>
-
-//       <div className="ticks"></div>
-
-//       <section id="next-steps">
-//         <div id="docs">
-//           <svg className="icon" role="presentation" aria-hidden="true">
-//             <use href="/icons.svg#documentation-icon"></use>
-//           </svg>
-//           <h2>Documentation</h2>
-//           <p>Your questions, answered</p>
-//           <ul>
-//             <li>
-//               <a href="https://vite.dev/" target="_blank">
-//                 <img className="logo" src={viteLogo} alt="" />
-//                 Explore Vite
-//               </a>
-//             </li>
-//             <li>
-//               <a href="https://react.dev/" target="_blank">
-//                 <img className="button-icon" src={reactLogo} alt="" />
-//                 Learn more
-//               </a>
-//             </li>
-//           </ul>
-//         </div>
-//         <div id="social">
-//           <svg className="icon" role="presentation" aria-hidden="true">
-//             <use href="/icons.svg#social-icon"></use>
-//           </svg>
-//           <h2>Connect with us</h2>
-//           <p>Join the Vite community</p>
-//           <ul>
-//             <li>
-//               <a href="https://github.com/vitejs/vite" target="_blank">
-//                 <svg
-//                   className="button-icon"
-//                   role="presentation"
-//                   aria-hidden="true"
-//                 >
-//                   <use href="/icons.svg#github-icon"></use>
-//                 </svg>
-//                 GitHub
-//               </a>
-//             </li>
-//             <li>
-//               <a href="https://chat.vite.dev/" target="_blank">
-//                 <svg
-//                   className="button-icon"
-//                   role="presentation"
-//                   aria-hidden="true"
-//                 >
-//                   <use href="/icons.svg#discord-icon"></use>
-//                 </svg>
-//                 Discord
-//               </a>
-//             </li>
-//             <li>
-//               <a href="https://x.com/vite_js" target="_blank">
-//                 <svg
-//                   className="button-icon"
-//                   role="presentation"
-//                   aria-hidden="true"
-//                 >
-//                   <use href="/icons.svg#x-icon"></use>
-//                 </svg>
-//                 X.com
-//               </a>
-//             </li>
-//             <li>
-//               <a href="https://bsky.app/profile/vite.dev" target="_blank">
-//                 <svg
-//                   className="button-icon"
-//                   role="presentation"
-//                   aria-hidden="true"
-//                 >
-//                   <use href="/icons.svg#bluesky-icon"></use>
-//                 </svg>
-//                 Bluesky
-//               </a>
-//             </li>
-//           </ul>
-//         </div>
-//       </section>
-
-//       <div className="ticks"></div>
-//       <section id="spacer"></section>
-//     </>
-//   )
-// }
-
-// export default App
+import {
+  Card,
+  Metric,
+  Text,
+  Grid,
+  Badge,
+  Flex,
+  Tracker,
+  Title,
+} from "@tremor/react";
 
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
@@ -127,28 +15,167 @@ import { supabase } from "./supabase";
 export default function App() {
   const [data, setData] = useState([]);
 
+  async function fetchData() {
+    const { data, error } = await supabase
+      .from("uptime_checks")
+      .select("*")
+      .order("timestamp", {
+        ascending: false,
+      });
+
+    console.log(data);
+    console.log(error);
+
+    setData(data || []);
+  }
+
   useEffect(() => {
-    async function test() {
-      const { data, error } = await supabase
-        .from("uptime_checks")
-        .select("*");
+    fetchData();
 
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
 
-      setData(data || []);
-    }
-
-    test();
+    return () => clearInterval(interval);
   }, []);
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h1>Supabase Test</h1>
+  // GROUP CHECKS BY DOMAIN
+  const grouped = {};
 
-      <pre>
-        {JSON.stringify(data, null, 2)}
-      </pre>
-    </div>
+  data.forEach((check) => {
+    if (!grouped[check.domain]) {
+      grouped[check.domain] = [];
+    }
+
+    grouped[check.domain].push(check);
+  });
+
+  return (
+    <main className="min-h-screen bg-slate-100 p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+
+        <div>
+          <Title>API Uptime Monitor</Title>
+
+          <Text className="mt-2">
+            Python + Supabase + React + Tremor
+          </Text>
+        </div>
+
+        {/* DOMAIN CARDS */}
+        <Grid
+          numItems={1}
+          numItemsMd={2}
+          numItemsLg={3}
+          className="gap-6"
+        >
+
+          {Object.entries(grouped).map(
+            ([domain, checks]) => {
+
+              const latest = checks[0];
+
+              const isOnline =
+                latest.status_code >= 200 &&
+                latest.status_code < 300;
+
+              const successCount = checks.filter(
+                (c) =>
+                  c.status_code >= 200 &&
+                  c.status_code < 300
+              ).length;
+
+              const uptime =
+                (
+                  (successCount / checks.length) *
+                  100
+                ).toFixed(1);
+
+              return (
+                <Card
+                  key={domain}
+                  className="shadow-lg rounded-2xl"
+                >
+
+                  {/* DOMAIN */}
+                  <Text>
+                    {domain}
+                  </Text>
+
+                  {/* STATUS */}
+                  <Flex
+                    justifyContent="start"
+                    alignItems="baseline"
+                    className="mt-4 space-x-3"
+                  >
+
+                    <Metric>
+                      {isOnline
+                        ? "Operational"
+                        : "Down"}
+                    </Metric>
+
+                    <Badge
+                      color={
+                        isOnline
+                          ? "emerald"
+                          : "rose"
+                      }
+                    >
+                      HTTP {latest.status_code}
+                    </Badge>
+
+                  </Flex>
+
+                  {/* LATENCY */}
+                  <div className="mt-6">
+                    <Text>
+                      Latest Latency
+                    </Text>
+
+                    <Metric className="mt-1">
+                      {latest.response_time}s
+                    </Metric>
+                  </div>
+
+                  {/* UPTIME */}
+                  <div className="mt-6">
+                    <Text>
+                      Uptime
+                    </Text>
+
+                    <Metric className="mt-1">
+                      {uptime}%
+                    </Metric>
+                  </div>
+
+                  {/* HISTORY */}
+                  <div className="mt-8">
+                    <Tracker
+                      data={checks
+                        .slice()
+                        .reverse()
+                        .map((check) => ({
+                          color:
+                            check.status_code >=
+                              200 &&
+                            check.status_code < 300
+                              ? "emerald"
+                              : "rose",
+
+                          tooltip:
+                            `HTTP ${check.status_code}`,
+                        }))}
+                    />
+                  </div>
+
+                </Card>
+              );
+            }
+          )}
+
+        </Grid>
+      </div>
+    </main>
   );
 }
