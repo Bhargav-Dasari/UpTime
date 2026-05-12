@@ -1,5 +1,5 @@
 # Uptime Monitor
-
+![Dashboard Preview](./assets/dashboard.png)
 A full-stack uptime monitoring dashboard built using:
 
 - Python
