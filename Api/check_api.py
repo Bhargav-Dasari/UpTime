@@ -3,6 +3,7 @@ import asyncio
 import os
 from supabase import create_client
 from dotenv import load_dotenv
+from fastapi import FastAPI
 
 load_dotenv()
 
@@ -12,6 +13,7 @@ urls = ['https://www.google.com', 'https://github.com/', 'https://aws.amazon.com
 
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_key"))
 
+app = FastAPI()
 
 async def req(client, url):
     response = await client.get(url, timeout=2)
@@ -25,10 +27,19 @@ async def main():
         return response
 
 
-data = asyncio.run(main())
-res = (
+@app.get("/api/check-sites")
+async def check_sites():
+    data = await main()
+    res = (
     supabase
     .table("uptime_checks")
     .insert(data)
     .execute()
 )
+    return {
+        "inserted data": len(data),
+        "data": data
+    }
+
+
+
