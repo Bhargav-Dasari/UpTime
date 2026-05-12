@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/api/*",
+      "destination": "api/check_apy.py"
+    }
+  ]
   "crons": [
     {
       "path": "/api/check-sites",

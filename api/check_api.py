@@ -50,6 +50,3 @@ async def check_sites():
         "inserted data": len(data),
         "data": data
     }
-
-
-
