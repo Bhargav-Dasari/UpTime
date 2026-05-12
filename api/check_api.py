@@ -21,7 +21,7 @@ async def req(client, url):
         return {"domain":url, 
                 "status_code": response.status_code, 
                 "response_time": round(response.elapsed.total_seconds(),2)}
-    except exception:
+    except Exception:
         return {
             "domain": url,
             "status_code": 500,
