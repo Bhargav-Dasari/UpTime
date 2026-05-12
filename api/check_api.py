@@ -50,3 +50,11 @@ async def check_sites():
         "inserted data": len(data),
         "data": data
     }
+
+# data = asyncio.run(main())
+# res = (
+#     supabase
+#     .table("uptime_checks")
+#     .insert(data)
+#     .execute()
+# )
