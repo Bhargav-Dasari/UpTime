@@ -16,8 +16,18 @@ supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_key"))
 app = FastAPI()
 
 async def req(client, url):
-    response = await client.get(url, timeout=2)
-    return {"domain":url, "status_code": response.status_code, "response_time": round(response.elapsed.total_seconds(),2)}
+    try:
+        response = await client.get(url, timeout=2)
+        return {"domain":url, 
+                "status_code": response.status_code, 
+                "response_time": round(response.elapsed.total_seconds(),2)}
+    except exception:
+        return {
+            "domain": url,
+            "status_code": 500,
+            "response_time":0
+        }
+    
 
 async def main():
     
