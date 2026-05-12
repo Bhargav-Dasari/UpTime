@@ -5,17 +5,19 @@ import {
   Grid,
   Badge,
   Flex,
-  Tracker,
   Title,
+  ProgressBar,
 } from "@tremor/react";
 
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 export default function App() {
+
   const [data, setData] = useState([]);
 
   async function fetchData() {
+
     const { data, error } = await supabase
       .from("uptime_checks")
       .select("*")
@@ -30,6 +32,7 @@ export default function App() {
   }
 
   useEffect(() => {
+
     fetchData();
 
     const interval = setInterval(() => {
@@ -37,12 +40,14 @@ export default function App() {
     }, 30000);
 
     return () => clearInterval(interval);
+
   }, []);
 
-  // GROUP CHECKS BY DOMAIN
+  // GROUP BY DOMAIN
   const grouped = {};
 
   data.forEach((check) => {
+
     if (!grouped[check.domain]) {
       grouped[check.domain] = [];
     }
@@ -51,18 +56,23 @@ export default function App() {
   });
 
   return (
+
     <main className="min-h-screen bg-slate-100 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
 
+      <div className="max-w-7xl mx-auto space-y-10">
+
+        {/* HEADER */}
         <div>
-          <Title>API Uptime Monitor</Title>
+          <Title>
+            API Uptime Monitor
+          </Title>
 
-          <Text className="mt-2">
-            Python + Supabase + React + Tremor
+          <Text className="mt-2 text-lg">
+            Python + FastAPI + Supabase + React + Tremor
           </Text>
         </div>
 
-        {/* DOMAIN CARDS */}
+        {/* SERVICE CARDS */}
         <Grid
           numItems={1}
           numItemsMd={2}
@@ -85,35 +95,30 @@ export default function App() {
                   c.status_code < 300
               ).length;
 
-              const uptime =
-                (
-                  (successCount / checks.length) *
-                  100
-                ).toFixed(1);
+              const uptime = (
+                (successCount / checks.length) *
+                100
+              ).toFixed(1);
 
               return (
+
                 <Card
                   key={domain}
-                  className="shadow-lg rounded-2xl"
+                  className="rounded-2xl shadow-xl"
                 >
 
                   {/* DOMAIN */}
-                  <Text>
-                    {domain}
-                  </Text>
+                  <div className="flex items-center justify-between">
 
-                  {/* STATUS */}
-                  <Flex
-                    justifyContent="start"
-                    alignItems="baseline"
-                    className="mt-4 space-x-3"
-                  >
+                    <div>
+                      <Text>
+                        Website
+                      </Text>
 
-                    <Metric>
-                      {isOnline
-                        ? "Operational"
-                        : "Down"}
-                    </Metric>
+                      <Title className="mt-1 text-xl break-all">
+                        {domain}
+                      </Title>
+                    </div>
 
                     <Badge
                       color={
@@ -122,50 +127,61 @@ export default function App() {
                           : "rose"
                       }
                     >
-                      HTTP {latest.status_code}
+                      {isOnline
+                        ? "ONLINE"
+                        : "DOWN"}
                     </Badge>
-
-                  </Flex>
-
-                  {/* LATENCY */}
-                  <div className="mt-6">
-                    <Text>
-                      Latest Latency
-                    </Text>
-
-                    <Metric className="mt-1">
-                      {latest.response_time}s
-                    </Metric>
                   </div>
+
+                  {/* METRICS */}
+                  <Grid
+                    numItems={2}
+                    className="gap-4 mt-8"
+                  >
+
+                    <div>
+                      <Text>
+                        Status Code
+                      </Text>
+
+                      <Metric>
+                        {latest.status_code}
+                      </Metric>
+                    </div>
+
+                    <div>
+                      <Text>
+                        Latency
+                      </Text>
+
+                      <Metric>
+                        {latest.response_time}s
+                      </Metric>
+                    </div>
+
+                  </Grid>
 
                   {/* UPTIME */}
-                  <div className="mt-6">
-                    <Text>
-                      Uptime
-                    </Text>
-
-                    <Metric className="mt-1">
-                      {uptime}%
-                    </Metric>
-                  </div>
-
-                  {/* HISTORY */}
                   <div className="mt-8">
-                    <Tracker
-                      data={checks
-                        .slice()
-                        .reverse()
-                        .map((check) => ({
-                          color:
-                            check.status_code >=
-                              200 &&
-                            check.status_code < 300
-                              ? "emerald"
-                              : "rose",
 
-                          tooltip:
-                            `HTTP ${check.status_code}`,
-                        }))}
+                    <Flex>
+                      <Text>
+                        Uptime
+                      </Text>
+
+                      <Text>
+                        {uptime}%
+                      </Text>
+                    </Flex>
+
+                    <ProgressBar
+                      value={Number(uptime)}
+                      color={
+                        Number(uptime) > 95
+                          ? "emerald"
+                          : "amber"
+                      }
+                      className="mt-2"
                     />
                   </div>
 
